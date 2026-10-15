@@ -65,40 +65,43 @@ def main():
     parser.add_argument("--clubs", required=True, help="comma separated club names, substring match, e.g. cheam,purley,kidbrooke")
     parser.add_argument("--match", default="cyclone", help="case-insensitive substring of the class name (default: cyclone)")
     parser.add_argument("--days", default=",".join(DAYS), help="comma separated days, e.g. Mon,Tue,Wed,Thu,Fri")
-    parser.add_argument("--after", default="00:00", help="earliest start time HH:MM")
-    parser.add_argument("--before", default="23:59", help="latest start time HH:MM")
+    parser.add_argument("--after", default="00:00", help="earliest start time HH:MM, inclusive")
+    parser.add_argument("--before", default="23:59", help="latest start time HH:MM, inclusive")
     parser.add_argument("--json", action="store_true", help="emit JSON instead of a table")
     parser.add_argument("--raw-dir", help="also save each club's raw timetable JSON into this directory")
     args = parser.parse_args()
 
     days = [d.strip().title() for d in args.days.split(",")]
     rows = []
+    windows = {}
     for club_name, site_id in resolve_clubs([c.strip() for c in args.clubs.split(",")]).items():
         sessions = fetch(f"/clubs/{site_id}/sessions/timetable")["sessionsDetails"]
         if args.raw_dir:
             with open(f"{args.raw_dir}/{site_id}.json", "w") as f:
                 json.dump(sessions, f)
         full_days, slots = weekly_pattern(sessions, args.match, days, args.after, args.before)
+        windows[club_name] = [full_days[0], full_days[-1]] if full_days else None
         for (day, time, name, duration, studio), found in slots.items():
             rows.append({
                 "club": club_name, "day": day, "time": time, "duration": duration, "name": name, "studio": studio,
                 "active_dates": sorted(found["dates"]), "cancelled_dates": sorted(found["cancelled"]),
                 "weekly": len(found["dates"]) >= 2,
-                "window": [full_days[0], full_days[-1]] if full_days else None,
+                "window": windows[club_name],
             })
 
     rows.sort(key=lambda r: (DAYS.index(r["day"]), r["time"], r["club"]))
     if args.json:
         json.dump(rows, sys.stdout, indent=1)
         return
-    print("Weekly = seen on 2+ dates inside the full-data window. One-off = seen once. Cancelled dates listed when present.")
+    print("weekly (n) = active on n dates (2+) inside the club's full-data window. one-off = active once. Cancelled dates are appended when present.")
     for r in rows:
-        status = "weekly" if r["weekly"] else f"one-off {r['active_dates']}" if r["active_dates"] else "never active"
+        status = f"weekly ({len(r['active_dates'])})" if r["weekly"] else f"one-off {r['active_dates']}" if r["active_dates"] else "never active"
         if r["cancelled_dates"]:
             status += f" cancelled:{r['cancelled_dates']}"
         print(f"{r['day']} {r['time']} {r['duration']:>3}min  {r['club']:<18} {r['name']:<32} {r['studio']:<34} {status}")
-    if rows:
-        print(f"\nfull-data window: {rows[0]['window'][0]} -> {rows[0]['window'][1]}")
+    print()
+    for club_name, window in windows.items():
+        print(f"full-data window {club_name}: {window[0]} -> {window[1]}" if window else f"full-data window {club_name}: none")
 
 
 if __name__ == "__main__":

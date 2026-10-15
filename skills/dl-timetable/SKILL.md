@@ -9,12 +9,14 @@ The davidlloyd.co.uk timetable page is JavaScript-rendered: WebFetch and curl re
 
 ## Pull the data
 
+Paths are relative to this skill's directory.
+
 ```bash
 python3 -I scripts/dl_timetable.py --clubs cheam,purley,kidbrooke --match cyclone
 python3 -I scripts/dl_timetable.py --help
 ```
 
-One row per weekly slot: day, time, duration, club, class name, studio, and whether it is `weekly` (seen on 2+ dates) or `one-off`. `--days`, `--after`, `--before` narrow the output, so run it once for weekdays and once for weekends when the constraints differ. `--json` for machine use.
+One row per slot: day, time, duration, club, class name, studio, and `weekly (n)` (active on n dates, 2+) or `one-off`, with cancelled dates appended to the row when there are any, so the table alone is enough to trust. `--days`, `--after`, `--before` (both inclusive) narrow the output, so run it once for weekdays and once for weekends when the constraints differ. The full-data window is printed per club. `--json` for machine use.
 
 Endpoints, if you need them directly: `GET https://mobile-app-back.davidlloyd.co.uk/clubs` (siteId by clubName) and `GET /clubs/{siteId}/sessions/timetable` (`sessionsDetails[]` with `date`, `startTime`, `duration`, `name`, `locations`, `status`, `instructorNames`). No auth, no key.
 
@@ -23,7 +25,7 @@ Endpoints, if you need them directly: `GET https://mobile-app-back.davidlloyd.co
 - The API carries full detail for roughly the next 2.5 weeks, then only a few courses. The script prints the full-data window; anything outside it is ignored. Timetables rotate termly, so a calendar built from this needs a re-run when the term changes.
 - `status: cancelled` sessions are hidden on the website. A slot that only ever appears cancelled, or appears once, is not a weekly class. Say so rather than dropping it silently; the user will ask.
 - Some slots alternate week to week (live one week, virtual the next; CYCLONE one week, CYCLONE FTP Ride the next). They show as two one-offs at the same day and time. Merge them into one calendar entry and name both.
-- Class name variants matter: "CYCLONE", "CYCLONE On Screen - Virtual", "CYCLONE FTP Ride", "CYCLONE Taster". Confirm which the user wants before filtering.
+- Class name variants matter: "CYCLONE", "CYCLONE On Screen - Virtual", "CYCLONE FTP Ride", "CYCLONE Taster". If the user has not said which they want, include all of them and label each row; ask only in an interactive session.
 
 ## Building a schedule
 
