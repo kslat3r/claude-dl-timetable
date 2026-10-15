@@ -1,0 +1,8 @@
+{
+  "name": "dl-timetable",
+  "version": "1.0.0",
+  "description": "Pull David Lloyd club timetables from the app backend, find weekly class slots across clubs and build a calendar schedule from them.",
+  "author": {
+    "name": "Ed Kelly"
+  }
+}

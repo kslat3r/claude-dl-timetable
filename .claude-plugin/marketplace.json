@@ -1,0 +1,14 @@
+{
+  "name": "claude-dl-timetable",
+  "description": "David Lloyd class timetables for Claude Code: weekly class slots across clubs, filtered by day, time and travel, ready for a calendar.",
+  "owner": {
+    "name": "Ed Kelly"
+  },
+  "plugins": [
+    {
+      "name": "dl-timetable",
+      "source": "./",
+      "description": "Pull David Lloyd club timetables from the app backend, find weekly class slots across clubs and build a calendar schedule from them."
+    }
+  ]
+}
